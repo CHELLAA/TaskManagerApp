@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+# TaskManagerApp
+=======
+>>>>>>> e37463c (Initial commit)
 # TaskFlow - Enterprise Todo Application
 
 A production-ready enterprise Todo application with FastAPI backend and modern SPA frontend.
@@ -179,3 +185,7 @@ The SQLite database is automatically created on first run. It's stored as `todos
 ## License
 
 MIT License
+<<<<<<< HEAD
+=======
+>>>>>>> 2d0dfa7 (Initial commit)
+>>>>>>> e37463c (Initial commit)

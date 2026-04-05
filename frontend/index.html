@@ -2,8 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow - Enterprise Todo App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TaskFlow">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="description" content="TaskFlow - Enterprise Todo Management App">
+    <title>TaskFlow</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%233b82f6'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>✓</text></svg>">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,13 +30,21 @@
                         success: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a' },
                         warning: { 50: '#fffbeb', 500: '#f59e0b', 600: '#d97706' },
                         danger: { 50: '#fef2f2', 500: '#ef4444', 600: '#dc2626' }
+                    },
+                    spacing: {
+                        'safe-bottom': 'env(safe-area-inset-bottom)',
+                        'safe-top': 'env(safe-area-inset-top)'
                     }
                 }
             }
         }
     </script>
     <style>
-        * { font-family: 'Inter', sans-serif; }
+        * { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { 
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: touch;
+        }
         
         .fade-in { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
@@ -36,8 +55,11 @@
         .scale-in { animation: scaleIn 0.2s ease-out; }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         
-        .task-card { transition: all 0.2s ease; }
-        .task-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+        
+        .task-card { transition: all 0.2s ease; touch-action: manipulation; }
+        .task-card:active { transform: scale(0.98); }
         
         .sortable-ghost { opacity: 0.4; }
         .sortable-chosen { box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
@@ -49,7 +71,7 @@
         .priority-medium { background-color: #f59e0b; }
         .priority-low { background-color: #22c55e; }
         
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
@@ -62,21 +84,36 @@
         
         .toast-exit { animation: toastExit 0.3s ease-in forwards; }
         @keyframes toastExit { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .task-card { padding: 14px; }
+            .btn-touch { min-height: 44px; min-width: 44px; }
+        }
+        
+        /* Safe area padding for notched devices */
+        .safe-area-bottom { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+        .safe-area-top { padding-top: max(16px, env(safe-area-inset-top)); }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
     <!-- Toast Container -->
-    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+    <div id="toast-container" class="fixed top-4 right-4 left-4 sm:left-auto z-50 flex flex-col gap-2 safe-area-top"></div>
 
     <!-- Auth Pages -->
-    <div id="auth-page" class="min-h-screen flex items-center justify-center p-4">
+    <div id="auth-page" class="min-h-screen flex items-center justify-center p-4 safe-area-top safe-area-bottom">
         <div class="w-full max-w-md">
             <div class="text-center mb-8">
+                <div class="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                </div>
                 <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">TaskFlow</h1>
-                <p class="text-gray-500 dark:text-gray-400 mt-2">Enterprise Todo Management</p>
+                <p class="text-gray-500 dark:text-gray-400 mt-2">Your tasks, anywhere</p>
             </div>
             
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 scale-in">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-8 scale-in">
                 <div class="flex mb-6 border-b border-gray-200 dark:border-gray-700">
                     <button id="login-tab" class="auth-tab active flex-1 pb-3 font-medium text-primary-600 border-b-2 border-primary-600" onclick="switchAuthTab('login')">Sign In</button>
                     <button id="register-tab" class="auth-tab flex-1 pb-3 font-medium text-gray-500 dark:text-gray-400 border-b-2 border-transparent" onclick="switchAuthTab('register')">Sign Up</button>
@@ -124,15 +161,22 @@
     <!-- Main App -->
     <div id="app-page" class="hidden">
         <!-- Mobile Header -->
-        <header class="lg:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-40">
+        <header class="lg:hidden fixed top-0 left-0 right-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 z-40 safe-area-top">
             <div class="flex items-center justify-between px-4 py-3">
-                <button onclick="toggleSidebar()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                <button onclick="toggleSidebar()" class="p-2 -ml-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 btn-touch">
                     <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
                 </button>
-                <h1 class="text-lg font-semibold text-gray-800 dark:text-white">TaskFlow</h1>
-                <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                    </div>
+                    <span class="text-lg font-semibold text-gray-800 dark:text-white">TaskFlow</span>
+                </div>
+                <button onclick="toggleDarkMode()" class="p-2 -mr-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 btn-touch">
                     <svg id="mobile-theme-icon" class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                     </svg>
@@ -215,32 +259,48 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
+        <main class="lg:ml-64 pt-16 lg:pt-0 min-h-screen pb-24 lg:pb-8">
             <div class="max-w-4xl mx-auto p-4 lg:p-8">
-                <!-- Header -->
-                <div class="mb-8">
+                <!-- Header (Desktop) -->
+                <div class="hidden lg:block mb-8">
                     <h2 class="text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white" id="page-title">All Tasks</h2>
                     <p class="text-gray-500 dark:text-gray-400 mt-1" id="page-subtitle">Manage your tasks efficiently</p>
                 </div>
 
+                <!-- Mobile Stats -->
+                <div class="lg:hidden mb-4 flex gap-4">
+                    <div class="flex-1 bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Total</p>
+                        <p class="text-xl font-bold text-gray-800 dark:text-white" id="mobile-total">0</p>
+                    </div>
+                    <div class="flex-1 bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Pending</p>
+                        <p class="text-xl font-bold text-warning-500" id="mobile-pending">0</p>
+                    </div>
+                    <div class="flex-1 bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Done</p>
+                        <p class="text-xl font-bold text-success-500" id="mobile-completed">0</p>
+                    </div>
+                </div>
+
                 <!-- Search & Add -->
-                <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                <div class="flex flex-col sm:flex-row gap-3 mb-6">
                     <div class="relative flex-1">
                         <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
-                        <input type="text" id="search-input" placeholder="Search tasks..." class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" onkeyup="handleSearch(event)">
+                        <input type="text" id="search-input" placeholder="Search tasks..." class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition btn-touch" onkeyup="handleSearch(event)">
                     </div>
-                    <button onclick="openTaskModal()" class="flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl transition transform active:scale-[0.98]">
+                    <button onclick="openTaskModal()" class="flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl transition transform active:scale-[0.98] btn-touch">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
-                        <span>New Task</span>
+                        <span>New</span>
                     </button>
                 </div>
 
-                <!-- Filters -->
-                <div class="flex flex-wrap gap-2 mb-6">
+                <!-- Filters (Desktop) -->
+                <div class="hidden lg:flex flex-wrap gap-2 mb-6">
                     <select id="priority-filter" onchange="applyFilters()" class="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm focus:ring-2 focus:ring-primary-500 transition">
                         <option value="">All Priorities</option>
                         <option value="high">High</option>
@@ -272,7 +332,7 @@
                     </div>
                     <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">No tasks found</h3>
                     <p class="text-gray-500 dark:text-gray-400 mb-6">Create your first task to get started</p>
-                    <button onclick="openTaskModal()" class="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl transition">
+                    <button onclick="openTaskModal()" class="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl transition btn-touch">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
@@ -289,21 +349,58 @@
                 </div>
 
                 <!-- Pagination -->
-                <div id="pagination" class="hidden flex items-center justify-between mt-8">
+                <div id="pagination" class="hidden lg:flex items-center justify-between mt-8">
                     <p class="text-sm text-gray-500 dark:text-gray-400">
                         Showing <span id="page-start">1</span>-<span id="page-end">10</span> of <span id="page-total">0</span> tasks
                     </p>
                     <div class="flex gap-2">
-                        <button id="prev-btn" onclick="changePage(-1)" class="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <button id="prev-btn" onclick="changePage(-1)" class="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed btn-touch" disabled>
                             Previous
                         </button>
-                        <button id="next-btn" onclick="changePage(1)" class="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <button id="next-btn" onclick="changePage(1)" class="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed btn-touch" disabled>
                             Next
                         </button>
                     </div>
                 </div>
             </div>
         </main>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 z-40 safe-area-bottom">
+            <div class="flex items-center justify-around py-2">
+                <button onclick="setFilter('all')" class="mobile-nav-btn active flex flex-col items-center gap-1 px-4 py-2 text-primary-600" data-filter="all">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                    <span class="text-xs font-medium">All</span>
+                </button>
+                <button onclick="setFilter('pending')" class="mobile-nav-btn flex flex-col items-center gap-1 px-4 py-2 text-gray-500 dark:text-gray-400" data-filter="pending">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span class="text-xs font-medium">Pending</span>
+                </button>
+                <button onclick="openTaskModal()" class="flex flex-col items-center gap-1 px-4 py-2 text-white">
+                    <div class="w-12 h-12 -mt-6 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center shadow-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                    </div>
+                </button>
+                <button onclick="setFilter('completed')" class="mobile-nav-btn flex flex-col items-center gap-1 px-4 py-2 text-gray-500 dark:text-gray-400" data-filter="completed">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span class="text-xs font-medium">Done</span>
+                </button>
+                <button onclick="toggleSidebar()" class="flex flex-col items-center gap-1 px-4 py-2 text-gray-500 dark:text-gray-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                    <span class="text-xs font-medium">Menu</span>
+                </button>
+            </div>
+        </nav>
     </div>
 
     <!-- Task Modal -->
@@ -575,6 +672,14 @@
             const completed = total - pending;
             document.getElementById('count-pending').textContent = pending;
             document.getElementById('count-completed').textContent = completed;
+            
+            // Update mobile stats
+            const mobileTotal = document.getElementById('mobile-total');
+            const mobilePending = document.getElementById('mobile-pending');
+            const mobileCompleted = document.getElementById('mobile-completed');
+            if (mobileTotal) mobileTotal.textContent = total;
+            if (mobilePending) mobilePending.textContent = pending;
+            if (mobileCompleted) mobileCompleted.textContent = completed;
         }
 
         function renderTasks() {
@@ -752,6 +857,19 @@
                 btn.classList.toggle('text-primary-600', btn.dataset.filter === filter);
                 btn.classList.toggle('dark:text-primary-400', btn.dataset.filter === filter);
             });
+            
+            // Update mobile navigation
+            document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+                const isActive = btn.dataset.filter === filter;
+                btn.classList.toggle('text-primary-600', isActive);
+                btn.classList.toggle('text-gray-500', !isActive);
+                btn.classList.toggle('dark:text-gray-400', !isActive);
+            });
+            
+            // Close sidebar on mobile after selecting filter
+            if (window.innerWidth < 1024) {
+                toggleSidebar();
+            }
             
             loadTasks();
         }

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pathlib import Path
 from .database import engine, Base
 from .routers import auth_router, tasks_router, categories_router
@@ -34,4 +34,8 @@ BASE_DIR = Path(__file__).parent.parent.parent
 def serve_frontend():
     return FileResponse(str(BASE_DIR / "frontend" / "index.html"))
 
-app.mount("/static", StaticFiles(directory=str(BASE_DIR / "frontend")), name="static")
+@app.get("/manifest.json")
+def serve_manifest():
+    return FileResponse(str(BASE_DIR / "frontend" / "manifest.json"))
+
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "frontend"), html=True), name="static")

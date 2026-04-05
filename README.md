@@ -1,16 +1,10 @@
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-# TaskManagerApp
-=======
->>>>>>> e37463c (Initial commit)
 # TaskFlow - Enterprise Todo Application
 
-A production-ready enterprise Todo application with FastAPI backend and modern SPA frontend.
+A production-ready enterprise Todo application with FastAPI backend and modern SPA frontend. Works on desktop, tablet, and mobile devices.
 
-![TaskFlow](https://img.shields.io/badge/TaskFlow-Todo%20App-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109-green)
 ![SQLite](https://img.shields.io/badge/Database-SQLite-orange)
+![Mobile](https://img.shields.io/badge/Mobile-PWA-brightgreen)
 
 ## Features
 
@@ -26,6 +20,13 @@ A production-ready enterprise Todo application with FastAPI backend and modern S
 - **Filters** - Filter by status (all/pending/completed), priority, category
 - **Pagination** - Efficient loading with paginated task lists
 - **Dark Mode** - Toggle between light and dark themes
+
+### Mobile App (PWA)
+- **Installable** - Add to home screen like a native app
+- **Offline Support** - Works offline (basic functionality)
+- **Bottom Navigation** - Easy thumb-friendly navigation
+- **Responsive Design** - Optimized for all screen sizes
+- **Touch Optimized** - Large tap targets, swipe gestures
 
 ### UI/UX Features
 - Modern SaaS dashboard design
@@ -45,6 +46,7 @@ A production-ready enterprise Todo application with FastAPI backend and modern S
 | Database | SQLite |
 | Frontend | HTML5, Tailwind CSS, SortableJS |
 | Auth | JWT (python-jose, passlib) |
+| PWA | Service Worker, Manifest |
 
 ## Project Structure
 
@@ -55,17 +57,19 @@ taskflow/
 │   │   ├── main.py           # FastAPI entry point
 │   │   ├── config.py         # Settings
 │   │   ├── database.py       # SQLAlchemy setup
-│   │   ├── models/           # User, Task, Category
-│   │   ├── schemas/          # Pydantic validation
-│   │   ├── routers/          # API endpoints
-│   │   ├── services/         # Business logic
-│   │   └── utils/            # JWT security
+│   │   ├── models/          # User, Task, Category
+│   │   ├── schemas/         # Pydantic validation
+│   │   ├── routers/         # API endpoints
+│   │   ├── services/        # Business logic
+│   │   └── utils/           # JWT security
 │   └── requirements.txt
 ├── frontend/
-│   └── index.html            # SPA frontend
+│   ├── index.html           # SPA frontend
+│   └── manifest.json        # PWA manifest
 ├── Dockerfile
 ├── docker-compose.yml
 ├── nginx.conf
+├── render.yaml
 └── README.md
 ```
 
@@ -86,10 +90,25 @@ uvicorn app.main:app --reload --port 8000 --host 0.0.0.0
 
 ### 3. Access the Application
 
-Open your browser and navigate to:
+Open your browser:
 ```
 http://localhost:8000
 ```
+
+## Mobile App Installation
+
+### iOS (Safari)
+1. Open the app in Safari
+2. Tap the Share button
+3. Tap "Add to Home Screen"
+4. Tap "Add"
+
+### Android (Chrome)
+1. Open the app in Chrome
+2. Tap the menu (⋮)
+3. Tap "Install app" or "Add to Home screen"
+
+The app will appear as a native-like icon on your home screen!
 
 ## API Documentation
 
@@ -153,39 +172,15 @@ curl -X POST http://localhost:8000/api/tasks \
 | `F` | Focus search input |
 | `Esc` | Close any open modal |
 
-## Features in Detail
+## Deployment
 
-### Task Properties
-- **Title** (required): Task name
-- **Description** (optional): Detailed description
-- **Priority**: Low (green), Medium (amber), High (red)
-- **Due Date**: Date and time picker
-- **Category**: Optional categorization
-- **Completed**: Boolean completion status
+### Render.com (Recommended - Free Tier)
+1. Push code to GitHub
+2. Connect to Render
+3. Deploy automatically!
 
-### Filter Options
-- **All Tasks**: View all tasks
-- **Pending**: Tasks not yet completed
-- **Completed**: Finished tasks
-- **By Priority**: High, Medium, Low
-- **By Category**: User-defined categories
-- **Search**: Text search in titles and descriptions
-
-## Development
-
-### Running in Development
-```bash
-cd backend
-uvicorn app.main:app --reload --port 8000
-```
-
-### Database
-The SQLite database is automatically created on first run. It's stored as `todos.db` in the backend directory.
+See `DEPLOYMENT.md` for more options.
 
 ## License
 
 MIT License
-<<<<<<< HEAD
-=======
->>>>>>> 2d0dfa7 (Initial commit)
->>>>>>> e37463c (Initial commit)

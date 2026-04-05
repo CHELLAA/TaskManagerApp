@@ -127,7 +127,23 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-                            <input type="password" name="password" required class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" placeholder="••••••••">
+                            <div class="relative">
+                                <input type="password" name="password" id="login-password" required class="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" placeholder="••••••••">
+                                <button type="button" onclick="togglePasswordVisibility('login-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                    <svg class="w-5 h-5 eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    <svg class="w-5 h-5 eye-off-icon hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <button type="button" onclick="openForgotPasswordModal()" class="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                                Forgot Password?
+                            </button>
                         </div>
                         <button type="submit" class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition transform active:scale-[0.98]">
                             Sign In
@@ -143,11 +159,33 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-                            <input type="password" name="password" required minlength="6" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" placeholder="••••••••">
+                            <div class="relative">
+                                <input type="password" name="password" id="register-password" required minlength="6" class="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" placeholder="••••••••">
+                                <button type="button" onclick="togglePasswordVisibility('register-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                    <svg class="w-5 h-5 eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    <svg class="w-5 h-5 eye-off-icon hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
-                            <input type="password" name="confirmPassword" required class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" placeholder="••••••••">
+                            <div class="relative">
+                                <input type="password" name="confirmPassword" id="register-confirm-password" required class="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" placeholder="••••••••">
+                                <button type="button" onclick="togglePasswordVisibility('register-confirm-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                    <svg class="w-5 h-5 eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    <svg class="w-5 h-5 eye-off-icon hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                         <button type="submit" class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition transform active:scale-[0.98]">
                             Create Account
@@ -500,6 +538,107 @@
         </div>
     </div>
 
+    <!-- Forgot Password Modal -->
+    <div id="forgot-password-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50" onclick="closeForgotPasswordModal()"></div>
+        <div class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl scale-in">
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">Reset Password</h3>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm">Enter your email and we'll send you a link to reset your password.</p>
+                </div>
+                
+                <form id="forgot-password-form" onsubmit="handleForgotPassword(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                        <input type="email" id="forgot-email" required class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 transition" placeholder="you@example.com">
+                    </div>
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeForgotPasswordModal()" class="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            Cancel
+                        </button>
+                        <button type="submit" id="forgot-submit-btn" class="flex-1 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition">
+                            Send Link
+                        </button>
+                    </div>
+                </form>
+                
+                <div id="forgot-success" class="hidden text-center py-4">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-success-50 dark:bg-success-900/30 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-success-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Check your email!</h4>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm">We've sent a password reset link to <span id="reset-email-display" class="font-medium"></span></p>
+                    <button onclick="closeForgotPasswordModal()" class="mt-4 px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition">
+                        Done
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div id="reset-password-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50"></div>
+        <div class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl scale-in">
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">Set New Password</h3>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm">Enter your new password below.</p>
+                </div>
+                
+                <form id="reset-password-form" onsubmit="handleResetPassword(event)" class="space-y-4">
+                    <input type="hidden" id="reset-token">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
+                        <div class="relative">
+                            <input type="password" id="new-password" required minlength="6" class="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 transition" placeholder="••••••••">
+                            <button type="button" onclick="togglePasswordVisibility('new-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600">
+                                <svg class="w-5 h-5 eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                                <svg class="w-5 h-5 eye-off-icon hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
+                        <div class="relative">
+                            <input type="password" id="confirm-new-password" required minlength="6" class="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 transition" placeholder="••••••••">
+                            <button type="button" onclick="togglePasswordVisibility('confirm-new-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600">
+                                <svg class="w-5 h-5 eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                                <svg class="w-5 h-5 eye-off-icon hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition">
+                        Reset Password
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         // State
         const state = {
@@ -605,6 +744,103 @@
             document.getElementById('app-page').classList.remove('hidden');
             loadTasks();
             loadCategories();
+        }
+
+        // Password Visibility Toggle
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const eyeIcon = btn.querySelector('.eye-icon');
+            const eyeOffIcon = btn.querySelector('.eye-off-icon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeIcon.classList.add('hidden');
+                eyeOffIcon.classList.remove('hidden');
+            } else {
+                input.type = 'password';
+                eyeIcon.classList.remove('hidden');
+                eyeOffIcon.classList.add('hidden');
+            }
+        }
+
+        // Forgot Password
+        function openForgotPasswordModal() {
+            document.getElementById('forgot-password-modal').classList.remove('hidden');
+            document.getElementById('forgot-success').classList.add('hidden');
+            document.getElementById('forgot-password-form').classList.remove('hidden');
+        }
+
+        function closeForgotPasswordModal() {
+            document.getElementById('forgot-password-modal').classList.add('hidden');
+            document.getElementById('forgot-password-form').reset();
+            document.getElementById('forgot-success').classList.add('hidden');
+            document.getElementById('forgot-password-form').classList.remove('hidden');
+        }
+
+        async function handleForgotPassword(e) {
+            e.preventDefault();
+            const email = document.getElementById('forgot-email').value;
+            const btn = document.getElementById('forgot-submit-btn');
+            
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            
+            try {
+                await api('/auth/forgot-password', {
+                    method: 'POST',
+                    body: JSON.stringify({ email })
+                });
+                
+                document.getElementById('reset-email-display').textContent = email;
+                document.getElementById('forgot-password-form').classList.add('hidden');
+                document.getElementById('forgot-success').classList.remove('hidden');
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Send Link';
+            }
+        }
+
+        function openResetPasswordModal(token) {
+            document.getElementById('reset-token').value = token;
+            document.getElementById('reset-password-modal').classList.remove('hidden');
+        }
+
+        async function handleResetPassword(e) {
+            e.preventDefault();
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-new-password').value;
+            const token = document.getElementById('reset-token').value;
+            
+            if (newPassword !== confirmPassword) {
+                showToast('Passwords do not match', 'error');
+                return;
+            }
+            
+            try {
+                await api('/auth/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, new_password: newPassword })
+                });
+                
+                showToast('Password reset successfully! Please login.', 'success');
+                document.getElementById('reset-password-modal').classList.add('hidden');
+                switchAuthTab('login');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Check for reset token in URL on page load
+        function checkResetToken() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('reset_token');
+            if (token) {
+                openResetPasswordModal(token);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
         }
 
         // Dark Mode
@@ -1034,19 +1270,21 @@
 
         // Keyboard Shortcuts
         document.addEventListener('keydown', (e) => {
-            if (document.getElementById('auth-page').classList.contains('hidden')) {
+            if (!document.getElementById('auth-page').classList.contains('hidden') || !document.getElementById('app-page').classList.contains('hidden')) {
                 if (e.key === 'n' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
                     e.preventDefault();
                     openTaskModal();
                 }
                 if (e.key === 'f' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
                     e.preventDefault();
-                    document.getElementById('search-input').focus();
+                    document.getElementById('search-input')?.focus();
                 }
                 if (e.key === 'Escape') {
                     closeTaskModal();
                     closeCategoryModal();
                     closeConfirmDialog();
+                    closeForgotPasswordModal();
+                    document.getElementById('reset-password-modal')?.classList.add('hidden');
                 }
             }
         });
@@ -1054,6 +1292,7 @@
         // Init
         async function init() {
             initDarkMode();
+            checkResetToken();
             if (state.token) {
                 try {
                     await loadUser();
@@ -1062,6 +1301,19 @@
                     logout();
                 }
             }
+        }
+
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+              .then((registration) => {
+                console.log('SW registered:', registration.scope);
+              })
+              .catch((error) => {
+                console.log('SW registration failed:', error);
+              });
+          });
         }
 
         init();

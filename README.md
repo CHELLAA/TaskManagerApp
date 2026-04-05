@@ -9,7 +9,7 @@ A production-ready enterprise Todo application with FastAPI backend and modern S
 ## Features
 
 ### Core Features
-- **User Authentication** - JWT-based auth with register/login
+- **User Authentication** - JWT-based auth with register/login/forgot password
 - **Task Management** - Full CRUD operations (Create, Read, Update, Delete)
 - **Task Completion** - Mark tasks as completed with visual feedback
 - **Priority Levels** - High, Medium, Low with color-coded badges
@@ -65,7 +65,8 @@ taskflow/
 │   └── requirements.txt
 ├── frontend/
 │   ├── index.html           # SPA frontend
-│   └── manifest.json        # PWA manifest
+│   ├── manifest.json        # PWA manifest
+│   └── sw.js                # Service worker for offline support
 ├── Dockerfile
 ├── docker-compose.yml
 ├── nginx.conf

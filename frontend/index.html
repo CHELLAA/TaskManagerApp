@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Enterprise Todo App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' },
+                        success: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a' },
+                        warning: { 50: '#fffbeb', 500: '#f59e0b', 600: '#d97706' },
+                        danger: { 50: '#fef2f2', 500: '#ef4444', 600: '#dc2626' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .slide-in { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        
+        .scale-in { animation: scaleIn 0.2s ease-out; }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        .task-card { transition: all 0.2s ease; }
+        .task-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
+        .sortable-ghost { opacity: 0.4; }
+        .sortable-chosen { box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+        
+        .checkbox-custom:checked { background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e"); }
+        
+        .priority-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .priority-high { background-color: #ef4444; }
+        .priority-medium { background-color: #f59e0b; }
+        .priority-low { background-color: #22c55e; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        
+        .loading-spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        .toast-enter { animation: toastEnter 0.3s ease-out; }
+        @keyframes toastEnter { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+        
+        .toast-exit { animation: toastExit 0.3s ease-in forwards; }
+        @keyframes toastExit { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <!-- Auth Pages -->
+    <div id="auth-page" class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md">
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">TaskFlow</h1>
+                <p class="text-gray-500 dark:text-gray-400 mt-2">Enterprise Todo Management</p>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 scale-in">
+                <div class="flex mb-6 border-b border-gray-200 dark:border-gray-700">
+                    <button id="login-tab" class="auth-tab active flex-1 pb-3 font-medium text-primary-600 border-b-2 border-primary-600" onclick="switchAuthTab('login')">Sign In</button>
+                    <button id="register-tab" class="auth-tab flex-1 pb-3 font-medium text-gray-500 dark:text-gray-400 border-b-2 border-transparent" onclick="switchAuthTab('register')">Sign Up</button>
+                </div>
+                
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                            <input type="email" name="email" required class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" placeholder="you@example.com">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                            <input type="password" name="password" required class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" placeholder="••••••••">
+                        </div>
+                        <button type="submit" class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition transform active:scale-[0.98]">
+                            Sign In
+                        </button>
+                    </div>
+                </form>
+                
+                <form id="register-form" class="hidden" onsubmit="handleRegister(event)">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                            <input type="email" name="email" required class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" placeholder="you@example.com">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                            <input type="password" name="password" required minlength="6" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" placeholder="••••••••">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
+                            <input type="password" name="confirmPassword" required class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" placeholder="••••••••">
+                        </div>
+                        <button type="submit" class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition transform active:scale-[0.98]">
+                            Create Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app-page" class="hidden">
+        <!-- Mobile Header -->
+        <header class="lg:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-40">
+            <div class="flex items-center justify-between px-4 py-3">
+                <button onclick="toggleSidebar()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <h1 class="text-lg font-semibold text-gray-800 dark:text-white">TaskFlow</h1>
+                <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <svg id="mobile-theme-icon" class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Sidebar Overlay -->
+        <div id="sidebar-overlay" class="hidden fixed inset-0 bg-black/50 z-40 lg:hidden" onclick="toggleSidebar()"></div>
+
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+            <div class="flex flex-col h-full">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">TaskFlow</h1>
+                </div>
+                
+                <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+                    <button onclick="setFilter('all')" class="filter-btn active w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition" data-filter="all">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                        <span class="font-medium">All Tasks</span>
+                        <span id="count-all" class="ml-auto px-2 py-0.5 text-xs font-medium bg-gray-100 dark:bg-gray-700 rounded-full">0</span>
+                    </button>
+                    
+                    <button onclick="setFilter('pending')" class="filter-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition" data-filter="pending">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="font-medium">Pending</span>
+                        <span id="count-pending" class="ml-auto px-2 py-0.5 text-xs font-medium bg-warning-50 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400 rounded-full">0</span>
+                    </button>
+                    
+                    <button onclick="setFilter('completed')" class="filter-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition" data-filter="completed">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="font-medium">Completed</span>
+                        <span id="count-completed" class="ml-auto px-2 py-0.5 text-xs font-medium bg-success-50 dark:bg-success-900/30 text-success-600 dark:text-success-400 rounded-full">0</span>
+                    </button>
+                    
+                    <div class="pt-4 pb-2">
+                        <div class="px-4 flex items-center justify-between">
+                            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Categories</span>
+                            <button onclick="openCategoryModal()" class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="category-list" class="space-y-1"></div>
+                </nav>
+                
+                <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold" id="user-avatar">U</div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800 dark:text-white truncate" id="user-email">user@example.com</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Free Plan</p>
+                        </div>
+                    </div>
+                    <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        <span class="text-sm font-medium">Sign Out</span>
+                    </button>
+                    <div class="mt-3 flex justify-center">
+                        <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition">
+                            <svg id="theme-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
+            <div class="max-w-4xl mx-auto p-4 lg:p-8">
+                <!-- Header -->
+                <div class="mb-8">
+                    <h2 class="text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white" id="page-title">All Tasks</h2>
+                    <p class="text-gray-500 dark:text-gray-400 mt-1" id="page-subtitle">Manage your tasks efficiently</p>
+                </div>
+
+                <!-- Search & Add -->
+                <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                    <div class="relative flex-1">
+                        <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input type="text" id="search-input" placeholder="Search tasks..." class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" onkeyup="handleSearch(event)">
+                    </div>
+                    <button onclick="openTaskModal()" class="flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl transition transform active:scale-[0.98]">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span>New Task</span>
+                    </button>
+                </div>
+
+                <!-- Filters -->
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <select id="priority-filter" onchange="applyFilters()" class="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm focus:ring-2 focus:ring-primary-500 transition">
+                        <option value="">All Priorities</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                    <select id="sort-filter" onchange="applyFilters()" class="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm focus:ring-2 focus:ring-primary-500 transition">
+                        <option value="task_order">Manual Order</option>
+                        <option value="created_at">Date Created</option>
+                        <option value="due_date">Due Date</option>
+                        <option value="priority">Priority</option>
+                    </select>
+                    <button id="sort-order-btn" onclick="toggleSortOrder()" class="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                        <svg id="sort-order-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Task List -->
+                <div id="task-list" class="space-y-3"></div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden text-center py-16">
+                    <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">No tasks found</h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-6">Create your first task to get started</p>
+                    <button onclick="openTaskModal()" class="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span>Create Task</span>
+                    </button>
+                </div>
+
+                <!-- Loading -->
+                <div id="loading-state" class="hidden text-center py-16">
+                    <svg class="w-12 h-12 mx-auto text-primary-600 loading-spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <p class="mt-4 text-gray-500 dark:text-gray-400">Loading tasks...</p>
+                </div>
+
+                <!-- Pagination -->
+                <div id="pagination" class="hidden flex items-center justify-between mt-8">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        Showing <span id="page-start">1</span>-<span id="page-end">10</span> of <span id="page-total">0</span> tasks
+                    </p>
+                    <div class="flex gap-2">
+                        <button id="prev-btn" onclick="changePage(-1)" class="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            Previous
+                        </button>
+                        <button id="next-btn" onclick="changePage(1)" class="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Task Modal -->
+    <div id="task-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50" onclick="closeTaskModal()"></div>
+        <div class="relative w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-2xl scale-in">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 id="task-modal-title" class="text-xl font-semibold text-gray-800 dark:text-white">New Task</h3>
+                <button onclick="closeTaskModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <form id="task-form" onsubmit="handleTaskSubmit(event)" class="p-6 space-y-5">
+                <input type="hidden" id="task-id">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title *</label>
+                    <input type="text" id="task-title" required class="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-primary-500 transition" placeholder="Enter task title">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                    <textarea id="task-description" rows="3" class="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-primary-500 transition resize-none" placeholder="Optional description"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Priority</label>
+                        <select id="task-priority" class="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-primary-500 transition">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Due Date</label>
+                        <input type="datetime-local" id="task-due-date" class="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-primary-500 transition">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
+                    <select id="task-category" class="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-primary-500 transition">
+                        <option value="">No Category</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeTaskModal()" class="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition">
+                        Save Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Category Modal -->
+    <div id="category-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50" onclick="closeCategoryModal()"></div>
+        <div class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl scale-in">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Manage Categories</h3>
+                <button onclick="closeCategoryModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6">
+                <form id="category-form" onsubmit="handleCategorySubmit(event)" class="flex gap-2 mb-6">
+                    <input type="text" id="category-name" required class="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-primary-500 transition" placeholder="Category name">
+                    <input type="color" id="category-color" value="#6366f1" class="w-12 h-10 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer">
+                    <button type="submit" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition">Add</button>
+                </form>
+                <div id="category-list-modal" class="space-y-2 max-h-64 overflow-y-auto"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Dialog -->
+    <div id="confirm-dialog" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50" onclick="closeConfirmDialog()"></div>
+        <div class="relative w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl shadow-2xl scale-in">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-danger-50 dark:bg-danger-900/30 flex items-center justify-center">
+                    <svg class="w-8 h-8 text-danger-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <h3 id="confirm-title" class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Delete Task?</h3>
+                <p id="confirm-message" class="text-gray-500 dark:text-gray-400 mb-6">This action cannot be undone.</p>
+                <div class="flex gap-3">
+                    <button onclick="closeConfirmDialog()" class="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">Cancel</button>
+                    <button id="confirm-btn" class="flex-1 px-4 py-2 bg-danger-500 hover:bg-danger-600 text-white font-medium rounded-lg transition">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        const state = {
+            user: null,
+            token: localStorage.getItem('token'),
+            tasks: [],
+            categories: [],
+            filters: {
+                filter: 'all',
+                search: '',
+                priority: '',
+                sort: 'task_order',
+                order: 'asc'
+            },
+            pagination: {
+                page: 1,
+                limit: 20,
+                total: 0,
+                pages: 0
+            }
+        };
+
+        // API
+        const API_BASE = 'http://localhost:8000/api';
+
+        async function api(endpoint, options = {}) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
+            const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers: { ...headers, ...options.headers } });
+            if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ detail: 'An error occurred' }));
+                throw new Error(err.detail || 'An error occurred');
+            }
+            if (res.status === 204) return null;
+            return res.json();
+        }
+
+        // Auth
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => {
+                t.classList.remove('active', 'text-primary-600', 'border-primary-600');
+                t.classList.add('text-gray-500', 'border-transparent');
+            });
+            document.getElementById(`${tab}-tab`).classList.add('active', 'text-primary-600', 'border-primary-600');
+            document.getElementById(`${tab}-tab`).classList.remove('text-gray-500', 'border-transparent');
+            document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+            document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const form = e.target;
+            try {
+                const res = await api('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email: form.email.value, password: form.password.value })
+                });
+                state.token = res.access_token;
+                localStorage.setItem('token', res.access_token);
+                await loadUser();
+                showApp();
+                showToast('Welcome back!', 'success');
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const form = e.target;
+            if (form.password.value !== form.confirmPassword.value) {
+                showToast('Passwords do not match', 'error');
+                return;
+            }
+            try {
+                await api('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ email: form.email.value, password: form.password.value })
+                });
+                showToast('Account created! Please sign in.', 'success');
+                switchAuthTab('login');
+                form.reset();
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        async function loadUser() {
+            try {
+                state.user = await api('/auth/me');
+                document.getElementById('user-email').textContent = state.user.email;
+                document.getElementById('user-avatar').textContent = state.user.email[0].toUpperCase();
+            } catch { state.user = null; }
+        }
+
+        function logout() {
+            state.token = null;
+            state.user = null;
+            localStorage.removeItem('token');
+            document.getElementById('auth-page').classList.remove('hidden');
+            document.getElementById('app-page').classList.add('hidden');
+        }
+
+        function showApp() {
+            document.getElementById('auth-page').classList.add('hidden');
+            document.getElementById('app-page').classList.remove('hidden');
+            loadTasks();
+            loadCategories();
+        }
+
+        // Dark Mode
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+            updateThemeIcon();
+        }
+
+        function initDarkMode() {
+            if (localStorage.getItem('darkMode') === 'true' || 
+                (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+            updateThemeIcon();
+        }
+
+        function updateThemeIcon() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const icon = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${isDark ? 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z' : 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z'}"/>`;
+            document.getElementById('theme-icon').innerHTML = icon;
+            document.getElementById('mobile-theme-icon').innerHTML = icon;
+        }
+
+        // Sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        // Tasks
+        async function loadTasks() {
+            const { filter, search, priority, sort, order } = state.filters;
+            const { page, limit } = state.pagination;
+            let params = `?page=${page}&limit=${limit}&sort=${sort}&order=${order}`;
+            if (search) params += `&search=${encodeURIComponent(search)}`;
+            if (priority) params += `&priority=${priority}`;
+            if (filter === 'completed') params += '&completed=true';
+            else if (filter === 'pending') params += '&completed=false';
+            if (state.filters.category_id) params += `&category_id=${state.filters.category_id}`;
+            
+            try {
+                document.getElementById('loading-state').classList.remove('hidden');
+                document.getElementById('task-list').classList.add('hidden');
+                document.getElementById('empty-state').classList.add('hidden');
+                
+                const res = await api(`/tasks${params}`);
+                state.tasks = res.items;
+                state.pagination = { page: res.page, limit: res.limit, total: res.total, pages: res.pages };
+                
+                updateTaskCounts(res.total);
+                renderTasks();
+                renderPagination();
+            } catch (err) { showToast(err.message, 'error'); }
+            finally {
+                document.getElementById('loading-state').classList.add('hidden');
+            }
+        }
+
+        function updateTaskCounts(total) {
+            document.getElementById('count-all').textContent = total;
+            const pending = state.tasks.filter(t => !t.completed).length;
+            const completed = total - pending;
+            document.getElementById('count-pending').textContent = pending;
+            document.getElementById('count-completed').textContent = completed;
+        }
+
+        function renderTasks() {
+            const list = document.getElementById('task-list');
+            const empty = document.getElementById('empty-state');
+            
+            if (state.tasks.length === 0) {
+                list.classList.add('hidden');
+                empty.classList.remove('hidden');
+                document.getElementById('pagination').classList.add('hidden');
+                return;
+            }
+            
+            list.classList.remove('hidden');
+            empty.classList.add('hidden');
+            document.getElementById('pagination').classList.remove('hidden');
+            
+            list.innerHTML = state.tasks.map(task => `
+                <div class="task-card bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm fade-in" data-id="${task.id}">
+                    <div class="flex items-start gap-4">
+                        <label class="relative flex-shrink-0 mt-1">
+                            <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})" class="checkbox-custom w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 appearance-none cursor-pointer transition peer">
+                            <span class="absolute inset-0 flex items-center justify-center ${task.completed ? 'bg-success-500 border-success-500' : ''} rounded-full transition"></span>
+                        </label>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="priority-dot priority-${task.priority}"></span>
+                                <h4 class="font-medium text-gray-800 dark:text-white ${task.completed ? 'line-through text-gray-400' : ''}">${escapeHtml(task.title)}</h4>
+                            </div>
+                            ${task.description ? `<p class="text-sm text-gray-500 dark:text-gray-400 mb-2 line-clamp-2">${escapeHtml(task.description)}</p>` : ''}
+                            <div class="flex flex-wrap items-center gap-2">
+                                ${task.category ? `<span class="px-2 py-0.5 text-xs font-medium rounded-full" style="background-color: ${task.category.color}20; color: ${task.category.color}">${escapeHtml(task.category.name)}</span>` : ''}
+                                ${task.due_date ? `<span class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    ${formatDate(task.due_date)}
+                                </span>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button onclick="editTask(${task.id})" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            </button>
+                            <button onclick="confirmDeleteTask(${task.id})" class="p-2 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-900/30 text-gray-400 hover:text-danger-500 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                            <div class="handle p-2 cursor-grab text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            initSortable();
+        }
+
+        function initSortable() {
+            const list = document.getElementById('task-list');
+            if (window.sortableInstance) window.sortableInstance.destroy();
+            window.sortableInstance = new Sortable(list, {
+                animation: 200,
+                handle: '.handle',
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                onEnd: async (evt) => {
+                    const tasks = [...state.tasks];
+                    const [moved] = tasks.splice(evt.oldIndex, 1);
+                    tasks.splice(evt.newIndex, 0, moved);
+                    state.tasks = tasks;
+                    
+                    const order = tasks.map((t, i) => ({ task_id: t.id, new_order: i }));
+                    try {
+                        await api('/tasks/reorder', { method: 'PATCH', body: JSON.stringify(order) });
+                    } catch (err) { showToast(err.message, 'error'); loadTasks(); }
+                }
+            });
+        }
+
+        async function toggleTask(id) {
+            const task = state.tasks.find(t => t.id === id);
+            if (!task) return;
+            try {
+                await api(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify({ completed: !task.completed }) });
+                task.completed = !task.completed;
+                renderTasks();
+                showToast(task.completed ? 'Task completed!' : 'Task reopened', 'success');
+            } catch (err) { showToast(err.message, 'error'); loadTasks(); }
+        }
+
+        function editTask(id) {
+            const task = state.tasks.find(t => t.id === id);
+            if (!task) return;
+            document.getElementById('task-id').value = task.id;
+            document.getElementById('task-title').value = task.title;
+            document.getElementById('task-description').value = task.description || '';
+            document.getElementById('task-priority').value = task.priority;
+            document.getElementById('task-category').value = task.category_id || '';
+            if (task.due_date) {
+                document.getElementById('task-due-date').value = task.due_date.slice(0, 16);
+            } else {
+                document.getElementById('task-due-date').value = '';
+            }
+            document.getElementById('task-modal-title').textContent = 'Edit Task';
+            openTaskModal();
+        }
+
+        async function openTaskModal() {
+            if (state.categories.length === 0) {
+                await loadCategories();
+            }
+            updateCategorySelect();
+            document.getElementById('task-modal').classList.remove('hidden');
+        }
+
+        function closeTaskModal() {
+            document.getElementById('task-modal').classList.add('hidden');
+            document.getElementById('task-form').reset();
+            document.getElementById('task-id').value = '';
+            document.getElementById('task-modal-title').textContent = 'New Task';
+        }
+
+        async function handleTaskSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('task-id').value;
+            const data = {
+                title: document.getElementById('task-title').value,
+                description: document.getElementById('task-description').value || null,
+                priority: document.getElementById('task-priority').value,
+                category_id: document.getElementById('task-category').value || null,
+                due_date: document.getElementById('task-due-date').value || null
+            };
+            
+            try {
+                if (id) {
+                    await api(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+                    showToast('Task updated!', 'success');
+                } else {
+                    await api('/tasks', { method: 'POST', body: JSON.stringify(data) });
+                    showToast('Task created!', 'success');
+                }
+                closeTaskModal();
+                loadTasks();
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        function confirmDeleteTask(id) {
+            document.getElementById('confirm-title').textContent = 'Delete Task?';
+            document.getElementById('confirm-message').textContent = 'This action cannot be undone.';
+            document.getElementById('confirm-btn').onclick = () => deleteTask(id);
+            document.getElementById('confirm-dialog').classList.remove('hidden');
+        }
+
+        async function deleteTask(id) {
+            try {
+                await api(`/tasks/${id}`, { method: 'DELETE' });
+                showToast('Task deleted', 'success');
+                closeConfirmDialog();
+                loadTasks();
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        // Filters
+        function setFilter(filter) {
+            state.filters.filter = filter;
+            state.pagination.page = 1;
+            
+            const titles = { all: ['All Tasks', 'Manage your tasks efficiently'], pending: ['Pending Tasks', 'Things you need to do'], completed: ['Completed Tasks', 'Great job!'] };
+            document.getElementById('page-title').textContent = titles[filter][0];
+            document.getElementById('page-subtitle').textContent = titles[filter][1];
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === filter);
+                btn.classList.toggle('bg-primary-50', btn.dataset.filter === filter);
+                btn.classList.toggle('dark:bg-primary-900/30', btn.dataset.filter === filter);
+                btn.classList.toggle('text-primary-600', btn.dataset.filter === filter);
+                btn.classList.toggle('dark:text-primary-400', btn.dataset.filter === filter);
+            });
+            
+            loadTasks();
+        }
+
+        function handleSearch(e) {
+            if (e.key === 'Enter') {
+                state.filters.search = e.target.value;
+                state.pagination.page = 1;
+                loadTasks();
+            }
+        }
+
+        function applyFilters() {
+            state.filters.priority = document.getElementById('priority-filter').value;
+            state.filters.sort = document.getElementById('sort-filter').value;
+            state.pagination.page = 1;
+            loadTasks();
+        }
+
+        function toggleSortOrder() {
+            state.filters.order = state.filters.order === 'asc' ? 'desc' : 'asc';
+            const icon = document.getElementById('sort-order-icon');
+            icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${state.filters.order === 'asc' ? 'M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12' : 'M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4'}"/>`;
+            loadTasks();
+        }
+
+        function changePage(delta) {
+            state.pagination.page += delta;
+            loadTasks();
+        }
+
+        function renderPagination() {
+            const { page, limit, total, pages } = state.pagination;
+            const start = (page - 1) * limit + 1;
+            const end = Math.min(page * limit, total);
+            
+            document.getElementById('page-start').textContent = total > 0 ? start : 0;
+            document.getElementById('page-end').textContent = end;
+            document.getElementById('page-total').textContent = total;
+            document.getElementById('prev-btn').disabled = page <= 1;
+            document.getElementById('next-btn').disabled = page >= pages;
+        }
+
+        // Categories
+        async function loadCategories() {
+            try {
+                state.categories = await api('/categories');
+                renderCategories();
+            } catch (err) { console.error(err); }
+        }
+
+        function renderCategories() {
+            const list = document.getElementById('category-list');
+            list.innerHTML = state.categories.map(cat => `
+                <button onclick="setCategoryFilter(${cat.id})" class="category-btn w-full flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition" data-category="${cat.id}">
+                    <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${cat.color}"></span>
+                    <span class="flex-1 text-left text-sm">${escapeHtml(cat.name)}</span>
+                </button>
+            `).join('');
+        }
+
+        function updateCategorySelect() {
+            const select = document.getElementById('task-category');
+            select.innerHTML = '<option value="">No Category</option>' + 
+                state.categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+        }
+
+        function openCategoryModal() {
+            document.getElementById('category-modal').classList.remove('hidden');
+            renderCategoryListModal();
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('category-modal').classList.add('hidden');
+            document.getElementById('category-form').reset();
+        }
+
+        function renderCategoryListModal() {
+            const list = document.getElementById('category-list-modal');
+            if (state.categories.length === 0) {
+                list.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400 py-4">No categories yet</p>';
+                return;
+            }
+            list.innerHTML = state.categories.map(cat => `
+                <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <span class="w-4 h-4 rounded-full" style="background-color: ${cat.color}"></span>
+                    <span class="flex-1 text-gray-800 dark:text-white">${escapeHtml(cat.name)}</span>
+                    <button onclick="deleteCategory(${cat.id})" class="p-1 rounded hover:bg-danger-50 dark:hover:bg-danger-900/30 text-gray-400 hover:text-danger-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function handleCategorySubmit(e) {
+            e.preventDefault();
+            const data = { name: document.getElementById('category-name').value, color: document.getElementById('category-color').value };
+            try {
+                await api('/categories', { method: 'POST', body: JSON.stringify(data) });
+                document.getElementById('category-form').reset();
+                await loadCategories();
+                showToast('Category created!', 'success');
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        async function deleteCategory(id) {
+            try {
+                await api(`/categories/${id}`, { method: 'DELETE' });
+                await loadCategories();
+                showToast('Category deleted', 'success');
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        function setCategoryFilter(id) {
+            state.filters.filter = 'all';
+            state.filters.category_id = id;
+            state.pagination.page = 1;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-primary-50', 'dark:bg-primary-900/30', 'text-primary-600', 'dark:text-primary-400');
+            });
+            loadTasks();
+        }
+
+        // Confirm Dialog
+        function closeConfirmDialog() {
+            document.getElementById('confirm-dialog').classList.add('hidden');
+        }
+
+        // Toast
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const colors = {
+                success: 'bg-success-500',
+                error: 'bg-danger-500',
+                info: 'bg-primary-500'
+            };
+            const toast = document.createElement('div');
+            toast.className = `toast-enter px-4 py-3 rounded-lg text-white font-medium shadow-lg ${colors[type]}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('toast-exit');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Utils
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diff = date - now;
+            if (diff < 0 && diff > -86400000) return 'Today';
+            if (diff < 86400000 && diff >= 0) return 'Tomorrow';
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('auth-page').classList.contains('hidden')) {
+                if (e.key === 'n' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    openTaskModal();
+                }
+                if (e.key === 'f' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    document.getElementById('search-input').focus();
+                }
+                if (e.key === 'Escape') {
+                    closeTaskModal();
+                    closeCategoryModal();
+                    closeConfirmDialog();
+                }
+            }
+        });
+
+        // Init
+        async function init() {
+            initDarkMode();
+            if (state.token) {
+                try {
+                    await loadUser();
+                    showApp();
+                } catch {
+                    logout();
+                }
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
